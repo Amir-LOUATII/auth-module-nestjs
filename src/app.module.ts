@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CoreModule } from './core/core.module';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { CoreModule } from './core/core.module';
         url: configService.getOrThrow<string>('DATABASE_URL'),
         port: configService.getOrThrow<number>('DATABASE_PORT', 5432),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.getOrThrow<boolean>('DB_SYNC', true),
+        synchronize: configService.getOrThrow<boolean>('DB_SYNC', false),
+        namingStrategy: new SnakeNamingStrategy(),
       }),
     }),
     AuthModule,
