@@ -28,9 +28,18 @@ export default tseslint.config(
       },
     },
     rules: {
+      // TypeScript tweaks
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+
+      // ✅ Prettier line-ending fix for Windows vs Unix
+      'prettier/prettier': [
+        'warn',
+        {
+          endOfLine: 'auto',
+        },
+      ],
     },
   },
 );
