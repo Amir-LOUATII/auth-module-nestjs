@@ -3,14 +3,22 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AbstractPasswordHasher } from './interfaces/password-hasher.abstract';
 import { BcryptPasswordHasherService } from './services/bcrypt-password-hasher.service';
+import { UsersModule } from 'src/users/users.module';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { LocalStrategy } from './strategies/local.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
+  imports: [UsersModule, JwtModule.register({ publicKey: 'secrect_keys' }), PassportModule],
   providers: [
     AuthService,
     {
       provide: AbstractPasswordHasher,
       useClass: BcryptPasswordHasherService,
     },
+    LocalStrategy,
+    JwtStrategy,
   ],
   controllers: [AuthController],
 })

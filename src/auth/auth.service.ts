@@ -1,4 +1,71 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { UsersService } from 'src/users/users.service';
+import { RegisterDto } from './dto/register.dto';
+import { AbstractPasswordHasher } from './interfaces/password-hasher.abstract';
+import { LoginDto } from './dto/login.dto';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
-export class AuthService {}
+export class AuthService {
+  private readonly jwtAccessTokenSecret: string;
+  private readonly jwtAccessTokenExpiration: number;
+
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly passwordHasher: AbstractPasswordHasher,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {
+    this.jwtAccessTokenSecret = this.configService.getOrThrow<string>('JWT_ACCESS_TOKEN_SECRET');
+    this.jwtAccessTokenExpiration =
+      this.configService.getOrThrow<number>('JWT_ACCESS_TOKEN_EXPIRATION') ?? '1d';
+  }
+
+  async register({ password, email }: RegisterDto) {
+    const userExists = await this.usersService.checkDuplicateEmail(email);
+    if (userExists) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    const hashedPassword = await this.passwordHasher.hash(password);
+    await this.usersService.createUser({ email, password: hashedPassword });
+    return { email };
+  }
+
+  async login({ password, email }: LoginDto) {
+    const user = await this.usersService.findUserByEmail(email);
+    if (!user) {
+      throw new ConflictException('Invalid credentials');
+    }
+
+    const isPasswordValid = await this.passwordHasher.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new ConflictException('Invalid credentials');
+    }
+
+    const accessToken = await this.jwtService.signAsync(
+      { sub: user.id, email: user.email },
+      {
+        secret: this.jwtAccessTokenSecret,
+        expiresIn: this.jwtAccessTokenExpiration ?? '1d',
+      },
+    );
+
+    return { accessToken };
+  }
+
+  async validateUser(email: string, password: string): Promise<User> {
+    const user = await this.usersService.findUserByEmail(email);
+    if (!user) {
+      throw new ConflictException('Invalid credentials');
+    }
+
+    const isPasswordValid = await this.passwordHasher.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new ConflictException('Invalid credentials');
+    }
+    return user;
+  }
+}
