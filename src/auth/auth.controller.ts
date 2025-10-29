@@ -18,14 +18,15 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(LocalAuthGuard)
-  async login(@Request() req) {
+  @ApiBody({ type: RegisterDto })
+  login(@Request() req) {
     return req.user;
   }
 
   @Post('login/google')
   @UseGuards(GoogleAuthGuard)
   @ApiOAuth2(['email', 'profile'])
-  async googleAuth() {
+  googleAuth() {
     console.log('reached the gogle controler');
   }
 
