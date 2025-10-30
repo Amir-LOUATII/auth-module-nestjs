@@ -7,11 +7,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CoreModule } from './core/core.module';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { appConfig } from './config/app.config';
+import databaseConfig from './config/database.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      load: [appConfig, databaseConfig],
       envFilePath: ['.env.local', '.env'],
     }),
     TypeOrmModule.forRootAsync({
@@ -19,10 +22,9 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        url: configService.getOrThrow<string>('DATABASE_URL'),
-        port: configService.getOrThrow<number>('DATABASE_PORT', 5432),
+        url: configService.getOrThrow<string>('database.url'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.getOrThrow<boolean>('DB_SYNC', false),
+        synchronize: configService.getOrThrow<boolean>('database.synchronize', false),
         namingStrategy: new SnakeNamingStrategy(),
       }),
     }),
