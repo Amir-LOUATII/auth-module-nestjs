@@ -9,9 +9,16 @@ import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { ConfigModule } from '@nestjs/config';
+import authConfig from './config/auth.config';
 
 @Module({
-  imports: [UsersModule, JwtModule.register({ publicKey: 'secrect_keys' }), PassportModule],
+  imports: [
+    ConfigModule.forFeature(authConfig),
+    UsersModule,
+    JwtModule.register({ publicKey: 'secrect_keys' }),
+    PassportModule,
+  ],
   providers: [
     AuthService,
     {
